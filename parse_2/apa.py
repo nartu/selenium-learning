@@ -1,4 +1,5 @@
 import os
+import pprint
 import env
 from time import sleep
 from selenium import webdriver
@@ -28,10 +29,39 @@ class Apa(object):
         driver = webdriver.Chrome(executable_path=chromedriver_path_snap, chrome_options=chrome_options)
         return driver
 
+    def quit():
+        self.driver.quit()
+
+    def _write_txt(self, text, filename, ext='txt'):
+        file = os.path.join(os.getcwd(),'download_test',filename+'.'+ext)
+        f = open(file, "w")
+        f.write(text)
+        f.close()
+
     def auth(self):
         pass
 
-    def links(self):
+    def page(self, url):
+        text = ""
+        self.driver.get(url)
+        xpath = '//*[@id="lesson-editor"]/div[2]/div[1]/div/div/p[2]/a'
+        links = self.driver.find_elements_by_xpath(xpath)
+        text += "Main links:"+"\n"
+        text += "\n"
+        for link in links:
+            text += link.text+"\n"
+            text += link.get_attribute('href')+"\n"
+        ts = self.driver.find_elements_by_link_text("Трек 1")
+        text += "\n"
+        text += "Tasks:"+"\n"
+        for t in ts:
+            text += t.get_attribute('href')+"\n"
+        self._write_txt(text,self.driver.title)
+
+    def document(self, url):
+        self.driver.get(url)
+
+    def links_test(self):
         self.driver.get(self.uri)
         # links = self.driver.find_elements_by_css_selector("a")
         # //*[@id="group-with-lesson-grid-container"]/table/tbody/tr[1]/td[8]/a
@@ -62,11 +92,9 @@ class Apa(object):
 
 
 
-
-
-
-
 a = Apa()
 
 # print(os.path.join(os.getcwd(),'user-data'))
-a.links()
+# a.links()
+a.page(env.page_uri_local)
+# a.write_txt("test","test.txt")
