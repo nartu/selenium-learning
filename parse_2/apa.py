@@ -9,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from random import randint
 
 class Apa(object):
     """Parsing and save"""
@@ -32,8 +33,8 @@ class Apa(object):
     def quit():
         self.driver.quit()
 
-    def _write_txt(self, text, filename, ext='txt'):
-        file = os.path.join(os.getcwd(),'download_test',filename+'.'+ext)
+    def _write_txt(self, text, filename, subdir=".", ext='txt'):
+        file = os.path.join(os.getcwd(),'download_test',subdir,filename+'.'+ext)
         f = open(file, "w")
         f.write(text)
         f.close()
@@ -41,7 +42,7 @@ class Apa(object):
     def auth(self):
         pass
 
-    def page(self, url):
+    def page(self, url, subdir):
         text = ""
         self.driver.get(url)
         xpath = '//*[@id="lesson-editor"]/div[2]/div[1]/div/div/p[2]/a'
@@ -56,10 +57,45 @@ class Apa(object):
         text += "Tasks:"+"\n"
         for t in ts:
             text += t.get_attribute('href')+"\n"
-        self._write_txt(text,self.driver.title)
+        self._write_txt(text,self.driver.title,subdir)
+
+    def _list_item(self, url, subdir):
+        """ Open in new window, parse, close window """
+        # open new window
+        original_window = self.driver.current_window_handle
+        # self.driver.switch_to.new_window('window')    # not work
+        self.driver.execute_script("window.open('');")
+        WebDriverWait(self.driver, 10).until(EC.number_of_windows_to_be(2))
+        self.driver.switch_to.window(self.driver.window_handles[-1])
+        # parse
+        self.page(url, subdir)
+        print(self.driver.title)
+        sec = 3+randint(1,7)
+        print(f"Wait for {sec} seconds...")
+        sleep(sec)
+        # close of new window and return
+        self.driver.close()
+        self.driver.switch_to.window(original_window)
+        print("\n")
+
+
+    def list(self, url, subdir):
+        text = ""
+        self.driver.get(url)
+        xpath = '//*[@data-item-type="lesson"][*]//a'
+        links = self.driver.find_elements_by_xpath(xpath)
+        text += "URL: "+self.driver.current_url+"\n"
+        text += "\n"
+        for link in links:
+            text += link.text+"\n"
+            url = link.get_attribute('href')
+            text += url +"\n"
+            self._list_item(url, subdir)
+        self._write_txt(text,'list',subdir)
 
     def document(self, url):
         self.driver.get(url)
+
 
     def links_test(self):
         self.driver.get(self.uri)
@@ -90,11 +126,10 @@ class Apa(object):
             # WebDriverWait(self.driver, 10)
             # print(f'All window: {self.driver.window_handles}')
 
-
+    def test(self):
+        pass
 
 a = Apa()
 
-# print(os.path.join(os.getcwd(),'user-data'))
-# a.links()
-a.page(env.page_uri_local)
-# a.write_txt("test","test.txt")
+a.list(*for_list_1)
+# a.test()
